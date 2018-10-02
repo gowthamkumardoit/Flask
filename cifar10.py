@@ -27,7 +27,7 @@ CORS(app)
 def get_model():
     global model
     K.clear_session()
-    model = load_model('cifar10.h5')
+    model = load_model('cifar10_3.h5')
 
 
 @app.route('/predict', methods=['POST'])

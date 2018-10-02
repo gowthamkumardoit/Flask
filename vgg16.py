@@ -40,7 +40,7 @@ def predict():
     x = preprocess_input(image)
 
     prediction = model.predict(x)
-    label = decode_predictions(prediction, top=10)[0]
+    label = decode_predictions(prediction, top=5)[0]
     label = ({b: c} for a, b, c in label)
     values = ''.join(str(v) for v in label)
 

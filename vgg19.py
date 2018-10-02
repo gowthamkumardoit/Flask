@@ -22,7 +22,6 @@ from keras.models import Model
 app = Flask(__name__)
 CORS(app)
 
-
 def get_model():
     global model
     K.clear_session()
@@ -42,7 +41,7 @@ def predict():
     x = preprocess_input(image)
 
     prediction = model.predict(x)
-    label = decode_predictions(prediction, top=10)[0]
+    label = decode_predictions(prediction, top=5)[0]
     label = ({b: c} for a, b, c in label)
     values = ''.join(str(v) for v in label)
 
