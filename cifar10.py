@@ -19,7 +19,10 @@ from keras.preprocessing import image
 from keras.applications.vgg19 import preprocess_input, decode_predictions
 from keras.models import Model
 import cv2 as cv
+from keras.models import model_from_json
 
+import pandas as pd
+from classify import c100_classify
 app = Flask(__name__)
 CORS(app)
 
@@ -27,12 +30,12 @@ CORS(app)
 def get_model():
     global model
     K.clear_session()
-    model = load_model('cifar10_3.h5')
+    model = load_model('./models/cifar_10_final.h5')
+    model._make_predict_function()
 
-
+get_model()
 @app.route('/predict', methods=['POST'])
 def predict():
-    get_model()
     message = request.get_json(force=True)
     encoded = message['image']
     decoded = base64.b64decode(encoded)
@@ -40,27 +43,14 @@ def predict():
     width = 32
     height = 32
     image = image.resize((width, height), Image.NEAREST)
-    im2arr = np.array(image)  # im2arr.shape: height x width x channel
-    print(im2arr)
-    arr2im = im2arr.reshape(3, 32, 32)
-    print(arr2im.shape)
-    #arr2im = Image.fromarray(im2arr)
-    # print(im2arr)
-    #im = cv.resize(image,  (width, height))
-    #im.reshape((height, height))
-    # print(im.shape)  # (28,28)
+    im2arr = np.array(image)/255.  # im2arr.shape: height x width x channel
 
-    #image = cv2.resize((width, height), Image.NEAREST)
-    image = np.expand_dims(arr2im, axis=0)
-
-    print(image.shape)
-    #x = preprocess_input(image)
-
-    prediction = model.predict(image)[0]
-    print(prediction)
-    values = ','.join(str(v) for v in prediction)
-    # label = decode_predictions(prediction, top=10)[0]
-    # label = ({b: c} for a, b, c in label)
-    # values = ''.join(str(v) for v in label)
-
-    return jsonify(values)
+    labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck' ]
+   
+    image = np.expand_dims(im2arr, axis=0)
+    prob = model.predict_proba(np.reshape(image,(1,32,32,3)), batch_size=1, verbose=0)
+    pred = pd.DataFrame(data = np.reshape(prob,10), index=labels, columns={'probability'}).sort_values('probability', ascending=False)
+    pred['name'] = pred.index
+    data = [{'name':x, 'probability':y} for x,y in zip(pred.iloc[:5,1],pred.iloc[:5,0])]
+    print(data)
+    return jsonify(data)
